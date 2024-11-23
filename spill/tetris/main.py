@@ -1,78 +1,159 @@
 import pygame
 import random
+
+# Initialize Pygame modules
 pygame.init()
 pygame.font.init()
 pygame.mixer.init()
-pygame.joystick.init()
 
+# Global Variables
+SCREEN_WIDTH = 700
+SCREEN_HEIGHT = 700
+PLAY_WIDTH = 300  # Meaning 300 // 30 = 10 blocks
+PLAY_HEIGHT = 600  # Meaning 600 // 30 = 20 blocks
+BLOCK_SIZE = 30
 
-# VAR GLOBAL
-skjerm_bredde = 700
-skjerm_hoyde = 700
-Skjerm_bredde = 300
-spill_hoyde = 600
-blokk_storrelse = 30
-x_top_venstre = (skjerm_bredde - Skjerm_bredde) // 2
-y_top_venstre = skjerm_hoyde - spill_hoyde
+TOP_LEFT_X = (SCREEN_WIDTH - PLAY_WIDTH) // 2
+TOP_LEFT_Y = SCREEN_HEIGHT - PLAY_HEIGHT
 
-# tetris former
-L_form = [['.....', '...0.', '.000.', '.....', '.....'],
-          ['.....', '..0..', '..0..', '..00.', '.....'],
-          ['.....', '.....', '.000.', '.0...', '.....'],
-          ['.....', '.00..', '..0..', '..0..', '.....']]
-O_form = [['.....', '.....', '.00..', '.00..', '.....']]
-I_form = [['..0..', '..0..', '..0..', '..0..', '.....'],
-          ['.....', '0000.', '.....', '.....', '.....']]
-S_form = [['.....', '.....', '..00.', '.00..', '.....'],
-          ['.....', '..0..', '..00.', '...0.', '.....']]
-Z_form = [['.....', '.....', '.00..', '..00.', '.....'],
-          ['.....', '..0..', '.00..', '.0...', '.....']]
-J_form = [['.....', '.0...', '.000.', '.....', '.....'],
-          ['.....', '..00.', '..0..', '..0..', '.....'],
-          ['.....', '.....', '.000.', '...0.', '.....'],
-          ['.....', '..0..', '..0..', '.00..', '.....']]
-T_form = [['.....', '..0..', '.000.', '.....', '.....'],
-          ['.....', '..0..', '..00.', '..0..', '.....'],
-          ['.....', '.....', '.000.', '..0..', '.....'],
-          ['.....', '..0..', '.00..', '..0..', '.....']]
+# Tetris shapes and their rotations
+S_SHAPE = [['.....',
+            '.....',
+            '..00.',
+            '.00..',
+            '.....'],
+           ['.....',
+            '..0..',
+            '..00.',
+            '...0.',
+            '.....']]
 
-# form og form_farge indikserer hvert form fra 0-6 og gir hvert enkelt farger.
-former = [L_form, O_form, I_form, S_form, Z_form, J_form, T_form]
-form_farge = [(137, 129, 108),
-              (84, 105, 109),
-              (49, 100, 107),
-              (252, 248, 22),
-              (52, 66, 48),
-              (231, 237, 130),
-              (99, 13, 58)]
+Z_SHAPE = [['.....',
+            '.....',
+            '.00..',
+            '..00.',
+            '.....'],
+           ['.....',
+            '..0..',
+            '.00..',
+            '.0...',
+            '.....']]
 
+I_SHAPE = [['..0..',
+            '..0..',
+            '..0..',
+            '..0..',
+            '.....'],
+           ['.....',
+            '0000.',
+            '.....',
+            '.....',
+            '.....']]
 
-def skap_rutenett(locked_positions=None):
-    if locked_positions is None:
-        locked_positions = {}
-    grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
+O_SHAPE = [['.....',
+            '.....',
+            '.00..',
+            '.00..',
+            '.....']]
 
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            if (j, i) in locked_positions:
-                c = locked_positions[(j, i)]
-                grid[i][j] = c
-    return grid
+J_SHAPE = [['.....',
+            '.0...',
+            '.000.',
+            '.....',
+            '.....'],
+           ['.....',
+            '..00.',
+            '..0..',
+            '..0..',
+            '.....'],
+           ['.....',
+            '.....',
+            '.000.',
+            '...0.',
+            '.....'],
+           ['.....',
+            '..0..',
+            '..0..',
+            '.00..',
+            '.....']]
 
+L_SHAPE = [['.....',
+            '...0.',
+            '.000.',
+            '.....',
+            '.....'],
+           ['.....',
+            '..0..',
+            '..0..',
+            '..00.',
+            '.....'],
+           ['.....',
+            '.....',
+            '.000.',
+            '.0...',
+            '.....'],
+           ['.....',
+            '.00..',
+            '..0..',
+            '..0..',
+            '.....']]
 
-class Figur(object):
-    rows = 20
-    columns = 10
+T_SHAPE = [['.....',
+            '..0..',
+            '.000.',
+            '.....',
+            '.....'],
+           ['.....',
+            '..0..',
+            '..00.',
+            '..0..',
+            '.....'],
+           ['.....',
+            '.....',
+            '.000.',
+            '..0..',
+            '.....'],
+           ['.....',
+            '..0..',
+            '.00..',
+            '..0..',
+            '.....']]
 
-    def __init__(self, column, row, shape):
-        self.x = column
-        self.y = row
+SHAPES = [S_SHAPE, Z_SHAPE, I_SHAPE, O_SHAPE, J_SHAPE, L_SHAPE, T_SHAPE]
+SHAPE_COLORS = [
+    (0, 255, 0),    # S_SHAPE
+    (255, 0, 0),    # Z_SHAPE
+    (0, 255, 255),  # I_SHAPE
+    (255, 255, 0),  # O_SHAPE
+    (255, 165, 0),  # J_SHAPE
+    (0, 0, 255),    # L_SHAPE
+    (128, 0, 128)   # T_SHAPE
+]
+
+# Pre-load sounds
+CLEARED_SOUND = pygame.mixer.Sound('spill/tetris/musikk/clear.wav')
+GAME_OVER_SOUND = pygame.mixer.Sound('spill/tetris/musikk/gameover.wav')
+BACKGROUND_MUSIC = pygame.mixer.Sound('spill/tetris/musikk/Tetris_theme_song.wav')
+BACKGROUND_MUSIC.play(loops=-1)
+BACKGROUND_MUSIC.set_volume(0.01)
+
+class Piece(object):
+    def __init__(self, x, y, shape):
+        self.x = x
+        self.y = y
         self.shape = shape
-        self.color = form_farge[former.index(shape)]
+        self.color = SHAPE_COLORS[SHAPES.index(shape)]
         self.rotation = 0
 
+def create_grid(locked_positions={}):
+    grid = [[(0, 0, 0) for _ in range(10)] for _ in range(20)]
 
-def figur_format(shape):
+    for (j, i), color in locked_positions.items():
+        if i > -1:
+            grid[i][j] = color
+    return grid
+
+def convert_shape_format(shape):
     positions = []
     format = shape.shape[shape.rotation % len(shape.shape)]
 
@@ -80,276 +161,227 @@ def figur_format(shape):
         row = list(line)
         for j, column in enumerate(row):
             if column == '0':
-                positions.append((shape.x + j, shape.y + i))
-
-    for i, pos in enumerate(positions):
-        positions[i] = (pos[0] - 2, pos[1] - 4)
-
+                positions.append((shape.x + j - 2, shape.y + i - 4))
     return positions
 
+def valid_space(shape, grid):
+    accepted_positions = [
+        [(j, i) for j in range(10) if grid[i][j] == (0, 0, 0)] for i in range(20)
+    ]
+    accepted_positions = [pos for sub in accepted_positions for pos in sub]
 
-def reel_plass(shape, grid):
-    acc_pos = [[(j, i) for j in range(10) if grid[i][j] == (0, 0, 0)] for i in range(20)]
-    acc_pos = [j for sub in acc_pos for j in sub]
-    formatted = figur_format(shape)
+    formatted = convert_shape_format(shape)
 
     for pos in formatted:
-        if pos not in acc_pos:
+        if pos not in accepted_positions:
             if pos[1] > -1:
                 return False
-
     return True
 
-
 def check_lost(positions):
-    for pos in positions:
-        x, y = pos
+    for _, y in positions:
         if y < 1:
             return True
     return False
 
+def get_shape():
+    return Piece(5, 0, random.choice(SHAPES))
 
-def faa_figur():
-    global former, form_farge
-    return Figur(5, 0, random.choice(former))
-
-
-def tekts_midten(text, size, color, surface):
-    font = pygame.font.SysFont('font/Roboto-Black.ttf', 50)
+def draw_text_middle(text, size, color, surface):
+    font = pygame.font.SysFont('font/Roboto-Black.ttf', size)
     label = font.render(text, True, color)
 
-    surface.blit(label, (x_top_venstre + Skjerm_bredde / 2 - (label.get_width() / 2),
-                         y_top_venstre + spill_hoyde / 2 - label.get_height() / 2))
+    surface.blit(label, (TOP_LEFT_X + PLAY_WIDTH / 2 - label.get_width() / 2,
+                         TOP_LEFT_Y + PLAY_HEIGHT / 2 - label.get_height() / 2))
 
+def draw_grid(surface, grid):
+    sx = TOP_LEFT_X
+    sy = TOP_LEFT_Y
+    for i in range(len(grid)):
+        # Horizontal lines
+        pygame.draw.line(surface, (128, 128, 128),
+                         (sx, sy + i * BLOCK_SIZE),
+                         (sx + PLAY_WIDTH, sy + i * BLOCK_SIZE))
+        # Vertical lines
+        for j in range(len(grid[i])):
+            pygame.draw.line(surface, (128, 128, 128),
+                             (sx + j * BLOCK_SIZE, sy),
+                             (sx + j * BLOCK_SIZE, sy + PLAY_HEIGHT))
 
-def tegn_rutenett(surface, row, col):
-    sx = x_top_venstre
-    sy = y_top_venstre
-    for i in range(row):
-        # horisontale linjer
-        pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * 30),
-                         (sx + Skjerm_bredde, sy + i * 30))
-        # vertikale linjer
-        for j in range(col):
-            pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
-                             (sx + j * 30, sy + spill_hoyde))
+def clear_rows(grid, locked):
+    cleared_lines = 0
+    rows_to_remove = []
 
+    for i in range(len(grid)-1, -1, -1):
+        if (0, 0, 0) not in grid[i]:
+            rows_to_remove.append(i)
 
-def full_linje(grid, locked):
-
-    # sjekker om linje er klarert og flytter ned linje ned.
-
-    global fjern
-    klarert = 0
-    for i in range(len(grid) - 1, -1, -1):
-        row = grid[i]
-        if (0, 0, 0) not in row:
-            klarert += 1
-            # spiller av musikk når klarert.
-            cleared_song = pygame.mixer.Sound('musikk/clear.wav')
-            cleared_song.play()
-
-            fjern = i
-            for j in range(len(row)):
+    if rows_to_remove:
+        for row in rows_to_remove:
+            CLEARED_SOUND.play()
+            cleared_lines += 1
+            for j in range(len(grid[row])):
                 try:
-                    del locked[(j, i)]
-                except:
+                    del locked[(j, row)]
+                except KeyError:
                     continue
-    if klarert > 0:
-        for tast in sorted(list(locked), key=lambda x: x[1])[::-1]:
-            x, y = tast
-            if y < fjern:
-                nytt_tast = (x, y + klarert)
-                locked[nytt_tast] = locked.pop(tast)
-    return klarert
 
+        # Shift every row above down
+        for key in sorted(locked.keys(), key=lambda x: x[1])[::-1]:
+            x, y = key
+            num_cleared = sum(1 for row in rows_to_remove if y < row)
+            if num_cleared > 0:
+                new_key = (x, y + num_cleared)
+                locked[new_key] = locked.pop(key)
 
-def faa_neste_figur(shape, surface):
-    skjermy = y_top_venstre + spill_hoyde / 2 - 100
-    skjermx = x_top_venstre + Skjerm_bredde + 50
+    return cleared_lines
+
+def draw_next_shape(shape, surface):
+    font = pygame.font.SysFont('font/Roboto-Black.ttf', 35)
+    label = font.render('Next Shape', True, (255, 255, 255))
+
+    sx = TOP_LEFT_X + PLAY_WIDTH + 50
+    sy = TOP_LEFT_Y + PLAY_HEIGHT / 2 - 100
     format = shape.shape[shape.rotation % len(shape.shape)]
 
-    skrift_type = pygame.font.SysFont('font/Roboto-Black.ttf', 35)
-    neste_figur = skrift_type.render('Neste Figur', True, (255, 255, 255))
-
+    surface.blit(label, (sx, sy - 30))
     for i, line in enumerate(format):
         row = list(line)
         for j, column in enumerate(row):
             if column == '0':
-                pygame.draw.rect(surface, shape.color, (skjermx + j * 30, skjermy + i * 30, 30, 30), 0)
+                pygame.draw.rect(surface, shape.color,
+                                 (sx + j * BLOCK_SIZE, sy + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
 
-    surface.blit(neste_figur, (skjermx + 0, skjermy - 30))
-
-def draw_window(surface, poeng=0):
+def draw_window(surface, grid, score=0):
     surface.fill((0, 0, 0))
+    font = pygame.font.SysFont('font/Roboto-Black.ttf', 60)
+    label = font.render('Tetris', True, (255, 255, 255))
+
+    surface.blit(label, (TOP_LEFT_X + PLAY_WIDTH / 2 - label.get_width() / 2, 30))
+
+    # Draw score
+    font = pygame.font.SysFont('font/Roboto-Black.ttf', 30)
+    label = font.render(f'Score: {score}', True, (255, 255, 255))
+
+    sx = TOP_LEFT_X - 200
+    sy = TOP_LEFT_Y + 200
+    surface.blit(label, (sx + 20, sy + 160))
+
+    # Draw grid and board
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (x_top_venstre + j * 30, y_top_venstre + i * 30, 30, 30), 0)
+            pygame.draw.rect(surface, grid[i][j],
+                             (TOP_LEFT_X + j * BLOCK_SIZE,
+                              TOP_LEFT_Y + i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE), 0)
 
-    tegn_rutenett(surface, 20, 10)
-    pygame.draw.rect(surface, (255, 0, 0), (x_top_venstre, y_top_venstre, Skjerm_bredde, spill_hoyde), 5)
+    # Draw grid lines and border
+    draw_grid(surface, grid)
+    pygame.draw.rect(surface, (255, 0, 0),
+                     (TOP_LEFT_X, TOP_LEFT_Y, PLAY_WIDTH, PLAY_HEIGHT), 5)
 
-    skjermy = y_top_venstre + spill_hoyde / 2 - 100
-    skjermx = x_top_venstre + Skjerm_bredde + 50
+def main(win):
+    locked_positions = {}
+    grid = create_grid(locked_positions)
 
-    skrift_type = pygame.font.SysFont('font/Roboto-Black.ttf', 60)
-    poeng = skrift_type.render('Poeng: ' + str(poeng), True, (255, 255, 255))
-
-    surface.blit(poeng, (skjermx -280, skjermy - 260))
-
-
-def main():
-    global grid
-    laast_pos = {}
-    grid = skap_rutenett(laast_pos)
     change_piece = False
     run = True
-    Fall_tid = 0
-    naa_fig = faa_figur()
+    current_piece = get_shape()
+    next_piece = get_shape()
     clock = pygame.time.Clock()
-    neste_figur = faa_figur()
-    poeng = 0
-    joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
-    for joystick in joysticks:
-        print(joystick.get_name())
+    fall_time = 0
+    score = 0
 
     while run:
-        fall_speed = 0.24
-        grid = skap_rutenett(laast_pos)
-        Fall_tid += clock.get_rawtime()
+        fall_speed = 0.27  # Adjust as needed
+        grid = create_grid(locked_positions)
+        fall_time += clock.get_rawtime()
         clock.tick()
 
-        # får tetris formene til å falle nedover.
-        if Fall_tid / 1000 >= fall_speed:
-            Fall_tid = 0
-            naa_fig.y += 1
-            if not (reel_plass(naa_fig, grid)) and naa_fig.y > 0:
-                naa_fig.y -= 1
+        # Piece falling logic
+        if fall_time / 1000 >= fall_speed:
+            fall_time = 0
+            current_piece.y += 1
+            if not valid_space(current_piece, grid) and current_piece.y > 0:
+                current_piece.y -= 1
                 change_piece = True
 
+        # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
                 pygame.display.quit()
                 quit()
 
-            # KONTROLLER.           ### funker ikke.
-            ''''
-            if event.type == pygame.JOYHATMOTION:
-                print(event)
-
-                # får formene til å gå til venstre.
-                if event.value == pygame.CONTROLLER_BUTTON_DPAD_LEFT:
-                    naa_fig.x -= 1
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.x += 1
-
-                # flytter brikkene til høyre
-                elif event.value == pygame.CONTROLLER_BUTTON_DPAD_RIGHT:
-                    naa_fig.x += 1
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.x -= 1
-
-                # roterer formene.
-                elif event.value == pygame.CONTROLLER_BUTTON_DPAD_UP:
-                    naa_fig.rotation = naa_fig.rotation + 1 % len(naa_fig.shape)
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.rotation = naa_fig.rotation - 1 % len(naa_fig.shape)
-
-                #  får formene til å falle fortere ned.
-                if event.value == pygame.CONTROLLER_BUTTON_DPAD_DOWN:
-                    naa_fig.y += 1
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.y -= 1
-                '''''
-
-            # sjekker om en tast har blitt trykket inn. # KEYBOARD
             if event.type == pygame.KEYDOWN:
-
-                # får formene til å gå til venstre.
+                # Move left
                 if event.key == pygame.K_LEFT:
-                    naa_fig.x -= 1
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.x += 1
-
-                # flytter brikkene til høyre
+                    current_piece.x -= 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.x += 1
+                # Move right
                 elif event.key == pygame.K_RIGHT:
-                    naa_fig.x += 1
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.x -= 1
-
-                # roterer formene.
+                    current_piece.x += 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.x -= 1
+                # Rotate
                 elif event.key == pygame.K_UP:
-                    naa_fig.rotation = naa_fig.rotation + 1 % len(naa_fig.shape)
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.rotation = naa_fig.rotation - 1 % len(naa_fig.shape)
+                    current_piece.rotation = (current_piece.rotation + 1) % len(current_piece.shape)
+                    if not valid_space(current_piece, grid):
+                        current_piece.rotation = (current_piece.rotation - 1) % len(current_piece.shape)
+                # Move down
+                elif event.key == pygame.K_DOWN:
+                    current_piece.y += 1
+                    if not valid_space(current_piece, grid):
+                        current_piece.y -= 1
 
-                #  får formene til å falle fortere ned.
-                if event.key == pygame.K_DOWN:
-                    naa_fig.y += 1
-                    if not reel_plass(naa_fig, grid):
-                        naa_fig.y -= 1
+        shape_pos = convert_shape_format(current_piece)
 
-        shape_pos = figur_format(naa_fig)
-
-        # legger til formen i gridden
-        for i in range(len(shape_pos)):
-            x, y = shape_pos[i]
+        # Add piece to the grid for drawing
+        for x, y in shape_pos:
             if y > -1:
-                grid[y][x] = naa_fig.color
+                grid[y][x] = current_piece.color
 
-        # hvis formen faller på bakken.
+        # Piece hit the ground
         if change_piece:
             for pos in shape_pos:
-                p = (pos[0], pos[1])
-                laast_pos[p] = naa_fig.color
-            naa_fig = neste_figur
-            neste_figur = faa_figur()
+                locked_positions[(pos[0], pos[1])] = current_piece.color
+            current_piece = next_piece
+            next_piece = get_shape()
             change_piece = False
-            poeng += full_linje(grid, laast_pos) * 1
+            # Clear rows and update score
+            cleared_lines = clear_rows(grid, locked_positions)
+            if cleared_lines > 0:
+                score += cleared_lines * 10
 
-            # call four times to check for multiple clear rows
-            full_linje(grid, laast_pos)
-
-        draw_window(programm, poeng)
-        faa_neste_figur(neste_figur, programm)
+        draw_window(win, grid, score)
+        draw_next_shape(next_piece, win)
         pygame.display.update()
 
         # Check if user lost
-        if check_lost(laast_pos):
+        if check_lost(locked_positions):
+            draw_text_middle("YOU LOST!", 80, (255, 255, 255), win)
+            pygame.display.update()
+            GAME_OVER_SOUND.play()
+            pygame.time.delay(2000)
             run = False
 
-    tekts_midten('Du Tapte', 40, (255, 255, 255), programm)
-    taps_musikk = pygame.mixer.Sound('musikk/gameover.wav')
-    taps_musikk.play()
-    pygame.display.update()
-    pygame.time.delay(1500)
-
-
-def main_menu():
+def main_menu(win):
     run = True
     while run:
-        programm.fill((0, 0, 0))
-        tekts_midten('trykk på en tast for å begynne.', 80, (255, 255, 255), programm)
+        win.fill((0, 0, 0))
+        draw_text_middle('Press Any Key to Play', 60, (255, 255, 255), win)
         pygame.display.update()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+
             if event.type == pygame.KEYDOWN:
-                main()
-            if event.type == pygame.JOYHATMOTION:
-                main()
+                main(win)
     pygame.quit()
 
-
-# spiller av tetris theme i loop.
-bakgrunnsmusikk = pygame.mixer.Sound('musikk/Tetris_theme_song.wav')
-bakgrunnsmusikk.play(loops=-1)
-bakgrunnsmusikk.set_volume(0.01)
-
-# gir navn
-programm = pygame.display.set_mode((skjerm_bredde, skjerm_hoyde))
+# Set up the display
+win = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption('Tetris')
 
-# starter spillet
-main_menu()
+# Start the game
+main_menu(win)

@@ -23,4 +23,10 @@ This is a faithful recreation of the classic Tetris game, featuring all the trad
 
 ## Installation
 
-1. Clone the repository:
+1. **Clone and run**:
+   ```bash
+   $ git clone https://github.com/ludovici96/tetris.git
+   $ cd tetris
+   $ pip install pygame
+   $ python spill/tetris/main.py
+   ```
